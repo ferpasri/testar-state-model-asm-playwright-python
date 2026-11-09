@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Benchmark state 0</title></head>
+<body>
+    <h1>Local exploration benchmark</h1>
+    <button id="advance" onclick="advanceStep()">Advance</button>
+    <input id="entry" disabled aria-label="Benchmark entry" oninput="advanceStep()">
+    <output id="step">0</output>
+    <section>{{widgets}}</section>
+    <script>
+        window.benchmarkStep = 0;
+        function advanceStep() {
+            window.benchmarkStep += 1;
+            const fillNext = window.benchmarkStep % 2 === 1;
+            document.querySelector("#advance").disabled = fillNext;
+            document.querySelector("#entry").disabled = !fillNext;
+            if (fillNext) {
+                document.querySelector("#entry").value = "";
+            }
+            document.querySelector("#step").textContent = window.benchmarkStep;
+            document.title = "Benchmark state " + (window.benchmarkStep % {{states}});
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "testar-state-model-asm-playwright"
+version = "0.3.1"
+description = "Playwright action discovery and execution for TESTAR ASM exploration"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "BSD-3-Clause"
+license-files = ["LICENSE"]
+dependencies = [
+    "testar-state-model-asm>=0.3,<0.4",
+    "testar-evidence-playwright-adapter>=0.3.6,<0.4",
+]
+
+[project.urls]
+Repository = "https://github.com/ferpasri/testar-state-model-asm-playwright-python"
+Specifications = "https://github.com/ferpasri/testar-state-model-asm-specs"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+testar_state_model_asm_playwright = ["resources/*.js"]
