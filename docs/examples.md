@@ -4,8 +4,8 @@ Each example logs in to ParaBank with the public demo credentials john/demo, the
 
 | Example | What the script supplies | What the integration supplies |
 | --- | --- | --- |
-| [Basic](../examples/parabank_basic.py) | Login and an action count limit. | Default action discovery, abstraction, Unvisited selection with Random fallback, execution, and evidence. |
-| [Inputs and filters](../examples/parabank_inputs_and_filters.py) | Loan input values, excluded controls, and a readiness callback. | Discovery within those settings and ASM-controlled action selection. |
+| [Basic](../examples/parabank_basic.py) | Login and an action count limit. | Default action derivation, abstraction, Unvisited selection with Random fallback, execution, and evidence. |
+| [Inputs and filters](../examples/parabank_inputs_and_filters.py) | Loan input values, excluded controls, and a readiness callback. | Action derivation within those settings and ASM-controlled action selection. |
 | [Custom ASM](../examples/parabank_custom_asm.py) | Custom abstraction, alternating ASMs, and optional historical trace directories. | Model construction from those traces and live updates during exploration. |
 
 Run the commands below from the repository root, using an environment with the project and its dependencies installed. All scripts use the evidence facade, so login and exploration are recorded together in a new trace beneath target/traces.
@@ -16,7 +16,7 @@ Run the commands below from the repository root, using an environment with the p
 python examples/parabank_basic.py --actions 10 --headless
 ~~~
 
-The script shows the login steps directly, followed by explore(page, default_configuration(...)). The integration derives available clicks and selects and executes them. Default discovery offers fills only when values have been supplied, so this example explores clicks without generating form input. Logout remains an eligible link.
+The script shows the login steps directly, followed by explore(page, default_configuration(...)). The integration derives available clicks and selects and executes them. Default action derivation offers fills only when values have been supplied, so this example explores clicks without generating form input. Logout remains an eligible link.
 
 ## 2. Input values, exclusions, and readiness
 
@@ -24,11 +24,11 @@ The script shows the login steps directly, followed by explore(page, default_con
 python examples/parabank_inputs_and_filters.py --actions 20 --headless
 ~~~
 
-DiscoveryOptions supplies 999999 for #amount and 1 for #downPayment when those loan fields are present. It excludes links containing logout.htm or admin.htm. The readiness callback waits for DOMContentLoaded without requiring a particular application panel, so it also accepts XML/WSDL and unexpected pages.
+ActionDerivationOptions supplies 999999 for #amount and 1 for #downPayment when those loan fields are present. It excludes links containing logout.htm or admin.htm. The readiness callback waits for DOMContentLoaded without requiring a particular application panel, so it also accepts XML/WSDL and unexpected pages.
 
-These settings make fill actions available; the ASM chooses when to execute them. They do not enforce the sequence fill amount -> fill down payment -> Apply Now. A workflow with a required order belongs in scripted preparation or an explicit action-discovery/filtering policy.
+These settings make fill actions available; the ASM chooses when to execute them. They do not enforce the sequence fill amount -> fill down payment -> Apply Now. A workflow with a required order belongs in scripted preparation or an explicit action derivation/filtering policy.
 
-DOMContentLoaded does not guarantee that asynchronous application content has finished loading. A custom readiness callback can wait for such content, but must account for other states exploration may reach. A wrongly customized callback can time out before action discovery; this error propagates to the caller.
+DOMContentLoaded does not guarantee that asynchronous application content has finished loading. A custom readiness callback can wait for such content, but must account for other states exploration may reach. A wrongly customized callback can time out before action derivation; this error propagates to the caller.
 
 ## 3. Custom abstraction and historical traces
 
@@ -103,4 +103,4 @@ Each script prints the stop reason and the evidence directory. Load that individ
 
 The john/demo values are public demo credentials. For another application, obtain credentials through the application's usual secret configuration.
 
-[Implementation specifications](SPEC.md) describe the supported discovery and execution behavior.
+[Implementation specifications](SPEC.md) describe the supported action derivation and execution behavior.

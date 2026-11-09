@@ -14,7 +14,7 @@ from playwright.sync_api import sync_playwright
 from testar_evidence import EvidenceReader
 from testar_evidence_playwright import CaptureOptions, PlaywrightEvidence
 from testar_state_model_asm_playwright import (
-    DiscoveryOptions, PlaywrightExploration, PlaywrightExplorationDriver, default_configuration, discover_actions,
+    ActionDerivationOptions, PlaywrightExploration, PlaywrightExplorationDriver, default_configuration, derive_actions,
 )
 
 from benchmark_support import LocalFixture, PHASES, Timings, recording_timings
@@ -56,8 +56,8 @@ def validate_trace(directory, action_count, screenshots):
 def run_sample(browser, url, mode, arguments, output):
     """Execute one fresh-browser-context sample; no timing hooks remain afterwards."""
     timings = Timings()
-    discovery_options = DiscoveryOptions(input_values={"#entry": "benchmark text"})
-    discover = timings.wrap("discovery", discover_actions)
+    action_derivation_options = ActionDerivationOptions(input_values={"#entry": "benchmark text"})
+    timed_derive_actions = timings.wrap("action_derivation", derive_actions)
     ready = timings.wrap("readiness", lambda page: page.wait_for_load_state("domcontentloaded"))
     recorder = None
     exploration = None
@@ -78,30 +78,30 @@ def run_sample(browser, url, mode, arguments, output):
             with timings.measure("model_setup"):
                 exploration = PlaywrightExploration(
                     page, default_configuration(arguments.actions), recorder=recorder,
-                    historical_traces=arguments.existing_trace, discovery_options=discovery_options,
-                    discover=discover, wait_until_ready=ready, choose_index=lambda size: 0,
+                    historical_traces=arguments.existing_trace, action_derivation_options=action_derivation_options,
+                    derive_actions=timed_derive_actions, wait_until_ready=ready, choose_index=lambda size: 0,
                     state_without_actions="stop")
                 driver = exploration.driver
         elif mode == "evidence":
             with timings.measure("startup"):
                 driver = PlaywrightExplorationDriver(
-                    page, recorder, discovery_options=discovery_options,
-                    discover=discover, wait_until_ready=ready, state_without_actions="stop")
+                    page, recorder, action_derivation_options=action_derivation_options,
+                    derive_actions=timed_derive_actions, wait_until_ready=ready, state_without_actions="stop")
         with recording_timings(timings, page, recorder, exploration.asm if exploration else None, driver) as actions:
             if mode == "playwright_baseline":
                 # This benchmark script controls X actions (--actions). At each step
                 # it takes the fixture's only eligible action and asks Playwright to
                 # execute it. No ASM, state model, or evidence recorder is created.
                 ready(page)
-                available = discover(page, discovery_options)
+                available = timed_derive_actions(page, action_derivation_options)
                 for _ in range(arguments.actions):
                     action = require_one_action(available)
                     if not action.applicable():
                         raise RuntimeError("The fixture's next action is not applicable")
                     action.execute(5000)
                     ready(page)
-                    # Include result-state discovery, just as the recording driver does.
-                    available = discover(page, discovery_options)
+                    # Include result-state action derivation, just as the recording driver does.
+                    available = timed_derive_actions(page, action_derivation_options)
             elif mode == "evidence":
                 # The benchmark again takes the only choice. The driver additionally
                 # records states, available actions, executions, and results; no ASM runs.

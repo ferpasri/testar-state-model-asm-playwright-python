@@ -50,7 +50,7 @@ class PlaywrightExploration:
 
     def __init__(self, page, configuration=None, *, recorder=None, evidence_path="target/traces",
                  sut="application", test_objective=None, capture_options=None, historical_traces=(),
-                 discovery_options=None, discover=None, allow_action=None, wait_until_ready=None,
+                 action_derivation_options=None, derive_actions=None, allow_action=None, wait_until_ready=None,
                  action_timeout=5000, choose_index=None, state_without_actions="go_back"):
         """Load optional historical traces and connect the page to an independent ASM run."""
         configuration = default_configuration() if configuration is None else deepcopy(configuration)
@@ -73,7 +73,7 @@ class PlaywrightExploration:
         self.recorder = recorder
         try:
             self.driver = PlaywrightExplorationDriver(
-                page, recorder, discovery_options=discovery_options, discover=discover,
+                page, recorder, action_derivation_options=action_derivation_options, derive_actions=derive_actions,
                 allow_action=allow_action, wait_until_ready=wait_until_ready, action_timeout=action_timeout,
                 state_without_actions=state_without_actions)
         except BaseException:

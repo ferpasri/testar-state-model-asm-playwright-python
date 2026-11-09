@@ -14,7 +14,7 @@ from testar_state_model_asm_playwright import BrowserAction
 
 
 PHASES = (
-    "startup", "model_setup", "readiness", "discovery", "applicability",
+    "startup", "model_setup", "readiness", "action_derivation", "applicability",
     "browser_actions", "dom_capture", "screenshots", "recording",
     "model_update", "selection", "coordination", "cleanup",
 )

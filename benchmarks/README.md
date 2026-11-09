@@ -8,7 +8,7 @@ This benchmark compares the cost of the same browser interactions in three modes
 | evidence | The same benchmark choice is executed through the recording driver. | Yes | No |
 | asm | The real ASM selects the action and controls exploration through the recording driver. | Yes | Yes |
 
-Playwright supplies browser operations such as click and fill; it does not supply an ASM. In playwright_baseline, the control logic belongs to this benchmark script. With --actions 20 it discovers and executes exactly 20 actions. Discovery uses this integration's shared helper so the modes perform comparable discovery work.
+Playwright supplies browser operations such as click and fill; it does not supply an ASM. In playwright_baseline, the control logic belongs to this benchmark script. With --actions 20 it derives and executes exactly 20 actions. Action derivation uses this integration's shared helper so the modes perform comparable action derivation work.
 
 The fixture alternates a button click and a text fill. Exactly one action is eligible at each step, so all modes execute the same action sequence. The runner rejects comparisons with different action logs or incorrect trace counts. This fixture measures execution overhead; it does not measure which ASM finds more states or how effectively it navigates branches.
 
@@ -57,8 +57,8 @@ Times are measured with a monotonic clock. Nested work is subtracted from its pa
 | startup | Create the context/page, load the local fixture, and initialize recording. |
 | model_setup | Create the ASM, including reading supplied historical traces and building its initial model. |
 | readiness | Wait for DOMContentLoaded. |
-| discovery | Find the currently eligible control in the browser and create its action description. |
-| applicability | Recheck that the discovered control is usable and still matches. |
+| action derivation | Find the currently eligible control in the browser and create its action description. |
+| applicability | Recheck that the derived control is usable and still matches. |
 | browser_actions | Execute the native click or fill, including Playwright's waits. |
 | dom_capture | Extract and transport DOM data and map it into captured widgets, excluding screenshot time. |
 | screenshots | Capture PNG screenshots. |

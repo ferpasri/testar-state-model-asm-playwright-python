@@ -4,7 +4,7 @@ import argparse
 from pathlib import Path
 
 from testar_evidence_playwright import sync_playwright
-from testar_state_model_asm_playwright import DiscoveryOptions, default_configuration, explore
+from testar_state_model_asm_playwright import ActionDerivationOptions, default_configuration, explore
 
 
 def exploration_configuration(action_limit):
@@ -65,7 +65,7 @@ def run_sequence(browser, arguments):
             exploration_configuration(arguments.actions),
             historical_traces=arguments.existing_trace,
             # Offer these fills only where the fields exist; keep Logout excluded.
-            discovery_options=DiscoveryOptions(
+            action_derivation_options=ActionDerivationOptions(
                 input_values={"#amount": "999999", "#downPayment": "1"},
                 excluded_selectors=("a[href*='logout.htm']", "a[href*='admin.htm']"),
             ),

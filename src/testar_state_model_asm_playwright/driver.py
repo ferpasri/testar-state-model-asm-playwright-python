@@ -7,16 +7,16 @@ from playwright.sync_api import Error as PlaywrightError
 from testar_evidence_playwright import AvailableAction
 from testar_state_model_asm import ObservationUpdate, ExecutionUpdate, evidence_source
 
-from .discovery import BrowserAction, DiscoveryOptions, discover_actions
+from .action_derivation import BrowserAction, ActionDerivationOptions, derive_actions as default_derive_actions
 
 
 class PlaywrightExplorationDriver:
     """Derive actions, record their state, and execute the ASM's selected current choice."""
 
-    def __init__(self, page, recorder, *, discovery_options=None, discover=None,
+    def __init__(self, page, recorder, *, action_derivation_options=None, derive_actions=None,
                  allow_action=None, wait_until_ready=None, action_timeout=5000,
                  state_without_actions="go_back"):
-        """Use the supplied page and recorder, with optional discovery and readiness behavior."""
+        """Use the supplied page and recorder, with optional action derivation and readiness behavior."""
         if (isinstance(action_timeout, bool) or not isinstance(action_timeout, (int, float))
                 or not math.isfinite(action_timeout) or action_timeout <= 0):
             raise ValueError("action_timeout must be a positive number of milliseconds")
@@ -25,8 +25,8 @@ class PlaywrightExplorationDriver:
         self.state_without_actions = state_without_actions
         self.page = page
         self.recorder = recorder
-        self.options = discovery_options or DiscoveryOptions()
-        self.discover = discover or discover_actions
+        self.options = action_derivation_options or ActionDerivationOptions()
+        self.derive_actions = derive_actions or default_derive_actions
         self.allow_action = allow_action or (lambda action: True)
         self.wait_until_ready = wait_until_ready or (lambda page: page.wait_for_load_state("domcontentloaded"))
         self.action_timeout = action_timeout
@@ -53,11 +53,11 @@ class PlaywrightExplorationDriver:
         return self._observe_current()
 
     def _observe_current(self):
-        """Capture and discover once; the result also supplies the next selection context."""
+        """Capture and derive once; the result also supplies the next selection context."""
         self.wait_until_ready(self.page)
         observation = self.recorder.capture()
-        discovered = self.discover(self.page, self.options)
-        actions = [action for action in discovered if self.allow_action(action)]
+        derived_actions = self.derive_actions(self.page, self.options)
+        actions = [action for action in derived_actions if self.allow_action(action)]
         if not actions and self.state_without_actions == "go_back":
             # Browser navigation is an available action without a widget target.
             back = BrowserAction("go_back", "Go back in browser history", None, page=self.page)
@@ -111,7 +111,7 @@ class PlaywrightExplorationDriver:
             # current GUI so exploration can reassess it rather than reuse the old state.
             if self.page.is_closed():
                 return ExecutionUpdate(*self._snapshot())
-        # Discover result-state actions now so the ASM can immediately use them.
+        # Derive result-state actions now so the ASM can immediately use them.
         # Reuse this same saved observation on the next cycle rather than recapturing it.
         self._next_observation = self._observe_current()
         return ExecutionUpdate(self._next_observation.sources, self._next_observation.selected_runs)

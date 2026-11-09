@@ -1,4 +1,4 @@
-"""Small local pages explain discovery, selection, execution, and saved evidence."""
+"""Small local pages explain action derivation, selection, execution, and saved evidence."""
 
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -11,7 +11,7 @@ from playwright.sync_api import Error as PlaywrightError, sync_playwright
 from testar_evidence import EvidenceReader
 from testar_evidence_playwright import CaptureOptions, sync_playwright as recorded_playwright
 from testar_state_model_asm_playwright import (
-    BrowserAction, DiscoveryOptions, PlaywrightExploration, default_configuration, discover_actions, explore,
+    BrowserAction, ActionDerivationOptions, PlaywrightExploration, default_configuration, derive_actions, explore,
 )
 
 
@@ -85,7 +85,7 @@ class PlaywrightExplorationTests(unittest.TestCase):
         return {
             "evidence_path": self.root,
             "capture_options": CaptureOptions(screenshots=False),
-            "discovery_options": DiscoveryOptions(input_values={"#name": "Alice"}),
+            "action_derivation_options": ActionDerivationOptions(input_values={"#name": "Alice"}),
             "choose_index": lambda size: 0,
             **extra,
         }
@@ -95,7 +95,7 @@ class PlaywrightExplorationTests(unittest.TestCase):
         self.page.goto(self.site.url + "/login")
         self.page.locator("#user").fill("demo")
         self.page.locator("#signin").click()
-        # Discovery offers Open form, then filling name, then the newly enabled Submit.
+        # Action derivation offers Open form, then filling name, then the newly enabled Submit.
         # Unvisited chooses each action. The terminal page has no eligible actions.
         result = explore(self.page, default_configuration(10), **self.options(state_without_actions="stop"))
         self.assertEqual("no_available_choices", result.stopped["reason"])
@@ -108,11 +108,11 @@ class PlaywrightExplorationTests(unittest.TestCase):
         self.assertTrue(all(r["status"] == "completed" for r in trace.action_executions.values()))
         self.assertTrue(all(o["available_action_scope"] == "eligible" for o in trace.observations.values()))
 
-    def test_discovery_respects_visibility_filters_and_explicit_input_values(self):
+    def test_action_derivation_respects_visibility_filters_and_explicit_input_values(self):
         self.page.goto(self.site.url + "/controls")
-        options = DiscoveryOptions(input_values={"#configured": "text", "#secret": "password", "#readonly": "ignored"},
+        options = ActionDerivationOptions(input_values={"#configured": "text", "#secret": "password", "#readonly": "ignored"},
                                    excluded_selectors=("#exclude",))
-        actions = discover_actions(self.page, options)
+        actions = derive_actions(self.page, options)
         self.assertEqual(["click", "fill", "fill"], [action.action_type for action in actions])
         self.assertEqual(["Click visible", "Fill configured", "Fill secret"], [action.name for action in actions])
         self.assertNotIn("password", repr(actions))
@@ -145,9 +145,9 @@ class PlaywrightExplorationTests(unittest.TestCase):
 
     def test_a_replacement_control_at_the_same_dom_path_requires_a_fresh_observation(self):
         self.page.goto(self.site.url + "/home")
-        action = discover_actions(self.page)[0]
+        action = derive_actions(self.page)[0]
         self.page.locator("#next").evaluate("element => element.outerHTML = '<button>Different action</button>'")
-        # The selector still finds a visible button, but it is not the discovered control.
+        # The selector still finds a visible button, but it is not the derived control.
         self.assertFalse(action.applicable())
 
     def test_operation_failure_is_recorded_without_a_successful_transition(self):
@@ -163,7 +163,7 @@ class PlaywrightExplorationTests(unittest.TestCase):
     def test_historical_evidence_guides_navigation_to_a_known_unvisited_action(self):
         self.page.goto(self.site.url + "/home")
         first = explore(self.page, default_configuration(1), **self.options())
-        # The first trace executed Open form and discovered an unexecuted fill there.
+        # The first trace executed Open form and derived an unexecuted fill there.
         self.page.goto(self.site.url + "/home")
         with PlaywrightExploration(self.page, default_configuration(2),
                 historical_traces=[first.evidence_directory], **self.options()) as exploration:
@@ -219,12 +219,12 @@ class PlaywrightExplorationTests(unittest.TestCase):
         self.assertEqual("no_available_choices", result.stopped["reason"])
         self.assertEqual({}, EvidenceReader.read(result.evidence_directory).action_executions)
 
-    def test_custom_discovery_and_action_filter_are_independent_of_the_asm(self):
+    def test_custom_action_derivation_and_action_filter_are_independent_of_the_asm(self):
         self.page.goto(self.site.url + "/home")
-        def discover(page, options):
+        def derive_actions(page, options):
             return [BrowserAction("click", "Custom action", page.locator("#next"))]
         result = explore(self.page, default_configuration(1),
-                         **self.options(discover=discover, allow_action=lambda action: False))
+                         **self.options(derive_actions=derive_actions, allow_action=lambda action: False))
         self.assertEqual("no_available_choices", result.stopped["reason"])
         self.assertEqual(0, len(EvidenceReader.read(result.evidence_directory).action_executions))
 
@@ -233,7 +233,7 @@ class PlaywrightExplorationTests(unittest.TestCase):
         self.page.goto(self.site.url + "/controls")
         value = "unique-password-783"
         result = explore(self.page, default_configuration(1), **self.options(
-            discovery_options=DiscoveryOptions(input_values={"#secret": value}),
+            action_derivation_options=ActionDerivationOptions(input_values={"#secret": value}),
             allow_action=lambda action: action.action_type == "fill"))
         trace = EvidenceReader.read(result.evidence_directory)
         record = next(iter(trace.action_executions.values()))

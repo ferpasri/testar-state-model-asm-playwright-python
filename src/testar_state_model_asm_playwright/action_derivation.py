@@ -1,4 +1,4 @@
-"""Discover executable actions without requiring an exploratory testing tool."""
+"""Derive executable actions without requiring an exploratory testing tool."""
 
 from dataclasses import dataclass, field
 from importlib.resources import files
@@ -30,7 +30,7 @@ class BrowserAction:
             raise ValueError("A fill action requires a string value")
 
     def applicable(self) -> bool:
-        """Check the current GUI before committing to this previously discovered action."""
+        """Check the current GUI before committing to this previously derived action."""
         if self.action_type == "go_back":
             if self.page.is_closed():
                 return False
@@ -63,8 +63,8 @@ class BrowserAction:
 
 
 @dataclass(frozen=True)
-class DiscoveryOptions:
-    """Configure discovery boundaries and CSS selectors with explicit input values."""
+class ActionDerivationOptions:
+    """Configure action derivation boundaries and CSS selectors with explicit input values."""
 
     input_values: Mapping[str, str] = field(default_factory=dict, repr=False)
     excluded_selectors: tuple[str, ...] = ()
@@ -86,11 +86,11 @@ class DiscoveryOptions:
         object.__setattr__(self, "excluded_selectors", excluded)
 
 
-def discover_actions(page: Page, options: DiscoveryOptions | None = None) -> list[BrowserAction]:
-    """Find visible enabled clicks and configured fills in one browser-side discovery call."""
-    options = options or DiscoveryOptions()
-    script = files(__package__).joinpath("resources/discover.js").read_text(encoding="utf-8")
-    discovered = page.evaluate(script, {
+def derive_actions(page: Page, options: ActionDerivationOptions | None = None) -> list[BrowserAction]:
+    """Find visible enabled clicks and configured fills in one browser-side action derivation call."""
+    options = options or ActionDerivationOptions()
+    script = files(__package__).joinpath("resources/derive_actions.js").read_text(encoding="utf-8")
+    derived_actions = page.evaluate(script, {
         "inputSelectors": list(options.input_values),
         "excluded": list(options.excluded_selectors),
         "sameOrigin": options.same_origin_only,
@@ -100,5 +100,5 @@ def discover_actions(page: Page, options: DiscoveryOptions | None = None) -> lis
         BrowserAction(item["type"], item["name"], page.locator(item["selector"]),
                       options.input_values[item["inputSelector"]] if item["type"] == "fill" else None,
                       item["signature"])
-        for item in discovered
+        for item in derived_actions
     ]

@@ -1,10 +1,10 @@
 # TESTAR Playwright ASM Python
 
-Add model-based exploration to a synchronous Playwright script. The integration discovers actions on the current page, lets the ASM select one, executes it through Playwright, and records concrete evidence.
+Add model-based exploration to a synchronous Playwright script. The integration derives actions on the current page, lets the ASM select one, executes it through Playwright, and records concrete evidence.
 
 ~~~python
 from playwright.sync_api import sync_playwright
-from testar_state_model_asm_playwright import DiscoveryOptions, default_configuration, explore
+from testar_state_model_asm_playwright import ActionDerivationOptions, default_configuration, explore
 
 with sync_playwright() as playwright:
     browser = playwright.chromium.launch()
@@ -15,7 +15,7 @@ with sync_playwright() as playwright:
     result = explore(
         page,
         default_configuration(action_limit=20),
-        discovery_options=DiscoveryOptions(
+        action_derivation_options=ActionDerivationOptions(
             input_values={"input[name='search']": "example"},
             excluded_selectors=("a[href*='logout']",),
         ),
@@ -27,7 +27,7 @@ with sync_playwright() as playwright:
 
 The default configuration uses Unvisited ASM, with Random as a fallback, and stops at the overall action limit or when no eligible action remains. It groups states by page address and title. Supply your own configuration to select different abstraction rules and ASMs.
 
-Default discovery offers visible enabled buttons and same-origin links, and fills for fields with explicitly configured values. For states without eligible widget actions, state_without_actions="go_back" is the default; use "stop" to end exploration instead. [Specifications](docs/SPEC.md) describe customization, evidence coordination, and supported page scope.
+Default action derivation offers visible enabled buttons and same-origin links, and fills for fields with explicitly configured values. For states without eligible widget actions, state_without_actions="go_back" is the default; use "stop" to end exploration instead. [Specifications](docs/SPEC.md) describe customization, evidence coordination, and supported page scope.
 
 Native Playwright pages create a new timestamped evidence trace when exploration starts. Pages created through the evidence facade reuse their recorder, so scripted preparation and exploration can share a trace. You can also supply an explicit recorder.
 
@@ -49,7 +49,7 @@ The project uses normal package dependencies declared in [pyproject.toml](pyproj
 | Component | Purpose |
 | --- | --- |
 | BrowserAction | An available click/fill with a widget locator, or a browser-history back action without a widget target. |
-| DiscoveryOptions | Input values, excluded controls, link scope, and the action-discovery limit. |
+| ActionDerivationOptions | Input values, excluded controls, link scope, and the action derivation limit. |
 | PlaywrightExplorationDriver | Observe, derive actions, check applicability, execute, and report evidence to the ASM. |
 | PlaywrightExploration | Keep the ASM and driver together; expose the resulting model and manage an owned recorder. |
 | explore | Run exploration on an existing page and return its stop reason, model, and evidence directory. |

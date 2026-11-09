@@ -1,4 +1,4 @@
-"""Level 1: scripted login, followed by default action discovery and ASM selection."""
+"""Level 1: scripted login, followed by default action derivation and ASM selection."""
 
 import argparse
 from pathlib import Path
@@ -21,7 +21,7 @@ def run_sequence(browser, arguments):
         page.get_by_role("button", name="Log In", exact=True).click()
         # Wait until login finishes; this wait does not record an oracle result.
         page.get_by_text("Account Services", exact=True).wait_for(state="visible")
-        # The integration discovers actions; this script does not derive them.
+        # The integration derives actions; this script does not derive them.
         result = explore(page, default_configuration(arguments.actions),
                          state_without_actions=arguments.state_without_actions)
         return result

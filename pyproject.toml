@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "testar-state-model-asm-playwright"
 version = "0.3.1"
-description = "Playwright action discovery and execution for TESTAR ASM exploration"
+description = "Playwright action derivation and execution for TESTAR ASM exploration"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "BSD-3-Clause"

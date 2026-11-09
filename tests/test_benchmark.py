@@ -46,7 +46,7 @@ class BenchmarkTests(unittest.TestCase):
                 self.assertEqual(first, sample["action_log"])
                 seconds = sample["seconds"]
                 self.assertAlmostEqual(seconds["total"], sum(v for k, v in seconds.items() if k != "total"))
-                self.assertEqual(4, sample["calls"]["discovery"])
+                self.assertEqual(4, sample["calls"]["action_derivation"])
                 if sample["mode"] == "playwright_baseline":
                     self.assertIsNone(sample["trace"])
                     self.assertEqual(0.0, seconds["dom_capture"])
